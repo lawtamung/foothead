@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Ball</title>
+<style>
+    body {
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    #gameContainer {
+        text-align: center;
+    }
+    canvas {
+        border: 3px solid #333;
+        border-radius: 5px;
+        display: block;
+        margin: 0 auto;
+        background-color: #fff;
+    }
+    .arrowButton {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 50%;
+        background-color: #0095DD;
+        color: #fff;
+        cursor: pointer;
+        outline: none;
+    }
+    #scoreContainer {
+        margin-top: 20px;
+        color: #333;
+    }
+    #playAgainBtn {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+        display: none;
+    }
+</style>
+</head>
+<body>
+<audio id="hitSound">
+    <source src="hit.wav" type="audio/wav">
+</audio>
+<audio id="gameOverSound">
+    <source src="gameover.wav" type="audio/wav">
+</audio>
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="buttonContainer">
+        <button class="arrowButton" id="leftBtn">&#9664;</button>
+        <button class="arrowButton" id="rightBtn">&#9654;</button>
+    </div>
+    <div id="scoreContainer">
+        <p>Score: <span id="scoreDisplay">0</span></p>
+        <p>High Score: <span id="highScoreDisplay">0</span></p>
+    </div>
+    <button id="playAgainBtn">Play Again</button>
+</div>
+<script>
+    var hitSound = new Audio("hit.wav");
+    var gameOverSound = new Audio("gameover.wav");
+
+    var canvas = document.getElementById("gameCanvas");
+    var ctx = canvas.getContext("2d");
+
+    var ballRadius = 15;
+    var x = canvas.width / 2;
+    var y = canvas.height - 30;
+    var dx = 5;
+    var dy = -5;
+
+    var paddleHeight = 40;
+    var paddleWidth = 140;
+    var paddleX = (canvas.width - paddleWidth) / 2;
+
+    var rightPressed = false;
+    var leftPressed = false;
+
+    var score = 0;
+    var highScore = localStorage.getItem("highScore") || 0;
+
+    function drawBall() {
+        var ballImg = new Image();
+        ballImg.src = "ball.png";
+        ctx.drawImage(ballImg, x - ballRadius, y - ballRadius, ballRadius * 2, ballRadius * 2);
+    }
+
+    function drawPaddle() {
+        var paddleImg = new Image();
+        paddleImg.src = "foot.png";
+        ctx.drawImage(paddleImg, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+    }
+
+    function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#333";
+        ctx.fillText("Score: " + score, 8, 20);
+        ctx.fillText("High Score: " + highScore, 8, 40);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBall();
+        drawPaddle();
+        drawScore();
+
+        x += dx;
+        y += dy;
+
+        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+            dx = -dx;
+            playHitSound();
+        }
+        if (y + dy < ballRadius) {
+            dy = -dy;
+            playHitSound();
+        } else if (y + dy > canvas.height - ballRadius) {
+            if (x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+                score++;
+            } else {
+                gameOver();
+            }
+        }
+
+        if (rightPressed && paddleX < canvas.width - paddleWidth) {
+            paddleX += 7;
+        } else if (leftPressed && paddleX > 0) {
+            paddleX -= 7;
+        }
+    }
+
+    function movePaddleLeft() {
+        leftPressed = true;
+    }
+
+    function movePaddleRight() {
+        rightPressed = true;
+    }
+
+    function stopPaddle() {
+        leftPressed = false;
+        rightPressed = false;
+    }
+
+    function keyDownHandler(e) {
+        if (e.key == "Right" || e.key == "ArrowRight") {
+            rightPressed = true;
+        } else if (e.key == "Left" || e.key == "ArrowLeft") {
+            leftPressed = true;
+        }
+    }
+
+    function keyUpHandler(e) {
+        if (e.key == "Right" || e.key == "ArrowRight") {
+            rightPressed = false;
+        } else if (e.key == "Left" || e.key == "ArrowLeft") {
+            leftPressed = false;
+        }
+    }
+
+    function gameOver() {
+        clearInterval(interval);
+        gameOverSound.play();
+        var playAgainBtn = document.getElementById("playAgainBtn");
+        playAgainBtn.style.display = "block";
+        var scoreDisplay = document.getElementById("scoreDisplay");
+        var highScoreDisplay = document.getElementById("highScoreDisplay");
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("highScore", highScore);
+        }
+        scoreDisplay.textContent = score;
+        highScoreDisplay.textContent = highScore;
+        playAgainBtn.addEventListener("click", function() {
+            document.location.reload();
+        });
+        alert("Game Over. Your score is: " + score);
+    }
+
+    var interval;
+
+    function startGame() {
+        interval = setInterval(draw, 10);
+    }
+
+    startGame();
+
+    document.getElementById("leftBtn").addEventListener("mousedown", movePaddleLeft);
+    document.getElementById("leftBtn").addEventListener("touchstart", movePaddleLeft);
+    document.getElementById("rightBtn").addEventListener("mousedown", movePaddleRight);
+    document.getElementById("rightBtn").addEventListener("touchstart", movePaddleRight);
+    document.getElementById("leftBtn").addEventListener("mouseup", stopPaddle);
+    document.getElementById("leftBtn").addEventListener("touchend", stopPaddle);
+    document.getElementById("rightBtn").addEventListener("mouseup", stopPaddle);
+    document.getElementById("rightBtn").addEventListener("touchend", stopPaddle);
+
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+
+</script>
+</body>
+</html>
