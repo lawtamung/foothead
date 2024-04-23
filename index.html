@@ -21,15 +21,13 @@
     canvas {
         border: 3px solid #333;
         border-radius: 5px;
-        display: block;
-        margin: 0 auto;
         background-color: #fff;
     }
     .arrowButton {
-        width: 40px;
-        height: 40px;
-        font-size: 24px;
-        margin: 0 10px;
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+        margin: 5px;
         border: none;
         border-radius: 50%;
         background-color: #0095DD;
@@ -62,7 +60,7 @@
     <source src="gameover.wav" type="audio/wav">
 </audio>
 <div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="buttonContainer">
         <button class="arrowButton" id="leftBtn">&#9664;</button>
         <button class="arrowButton" id="rightBtn">&#9654;</button>
@@ -117,6 +115,8 @@
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = window.innerWidth - 20;
+        canvas.height = window.innerHeight - 100;
         drawBall();
         drawPaddle();
         drawScore();
@@ -198,6 +198,8 @@
     var interval;
 
     function startGame() {
+        canvas.width = window.innerWidth - 20;
+        canvas.height = window.innerHeight - 100;
         interval = setInterval(draw, 10);
     }
 
